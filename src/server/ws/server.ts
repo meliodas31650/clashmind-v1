@@ -1,34 +1,52 @@
 // src/server/ws/server.ts
-
-import { createServer } from 'http'
 import { WebSocketServer } from 'ws'
+import { createServer } from 'http'
 
-// Serveur HTTP de base (pour WebSocket)
 const server = createServer()
-
-// Serveur WebSocket attaché
 const wss = new WebSocketServer({ server })
+const users = new Map()
 
 wss.on('connection', (ws) => {
-  console.log('✅ Nouveau client connecté')
+  let userId = null
 
-  ws.on('message', (message) => {
-    console.log('📩 Message reçu:', message.toString())
+  ws.on('message', (data) => {
+    try {
+      const parsed = JSON.parse(data.toString())
 
-    // Broadcast à tous les clients connectés
-    wss.clients.forEach((client) => {
-      if (client.readyState === ws.OPEN) {
-        client.send(`🔁 Reçu: ${message}`)
+      // Enregistrement de l'utilisateur
+      if (parsed.type === 'connect') {
+        userId = parsed.userId
+        users.set(userId, ws)
+        broadcastUserList()
       }
-    })
+
+      // Déconnexion
+      if (parsed.type === 'disconnect') {
+        users.delete(userId)
+        broadcastUserList()
+      }
+    } catch (err) {
+      console.error('WebSocket error:', err)
+    }
   })
 
   ws.on('close', () => {
-    console.log('❌ Client déconnecté')
+    if (userId) {
+      users.delete(userId)
+      broadcastUserList()
+    }
   })
 })
 
-// Lancer le serveur sur le port 4000
+function broadcastUserList() {
+  const userList = Array.from(users.keys())
+  const message = JSON.stringify({ type: 'userList', users: userList })
+
+  users.forEach((ws) => {
+    ws.send(message)
+  })
+}
+
 server.listen(4000, () => {
   console.log('🧠 Serveur WebSocket ClashMind en écoute sur ws://localhost:4000')
 })

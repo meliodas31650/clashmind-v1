@@ -8,8 +8,8 @@ export default function Chat() {
   const [activeTab, setActiveTab] = useState("global") // Default tab is "global"
 
   return (
-    <div className="p-6 bg-clash-card rounded-xl shadow-md border border-clash-border">
-      {/* Onglets pour switch entre Chat Global et Chat Privé */}
+    <div className="p-6 bg-clash-card rounded-xl shadow-md border border-clash-border w-full">
+      {/* Switch entre Chat Global et Chat Privé */}
       <div className="flex mb-6">
         <button
           onClick={() => setActiveTab("global")}
